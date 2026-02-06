@@ -353,13 +353,44 @@ ol {
 
 /* ===== SCROLLBAR ===== */
 
-::-webkit-scrollbar {
-  display: none;
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary-30) transparent;
 }
 
-* {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary-30);
+  border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-50);
+}
+
+/* ===== ACCESSIBILITY ===== */
+
+:where(
+    button,
+    a,
+    input,
+    textarea,
+    select,
+    [role="button"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 /* ===== PAGE LAYOUT ===== */
@@ -696,5 +727,16 @@ ol {
   to {
     opacity: 0;
     transform: translateX(-50%) translateY(16px) scale(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }

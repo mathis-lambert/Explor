@@ -4,6 +4,7 @@ import {
   Share2,
   Heart,
   MapPin,
+  ExternalLink,
   ChevronDown,
   Images,
   ZoomIn,
@@ -60,6 +61,7 @@ export default function ArtworkDetail({
   onClose,
   isFavorited,
   onToggleFavorite,
+  onFindInMuseum,
 }) {
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState(null);
@@ -207,6 +209,18 @@ export default function ArtworkDetail({
               </div>
             )}
 
+            {artwork.sourceUrl && (
+              <a
+                href={artwork.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="artwork-panel__source-link"
+              >
+                <ExternalLink size={14} strokeWidth={2} />
+                View on The Met
+              </a>
+            )}
+
             {/* Gallery Bento */}
             <GalleryBento
               images={galleryImages}
@@ -236,7 +250,10 @@ export default function ArtworkDetail({
 
           {/* ───── BOTTOM BAR ───── */}
           <div className="artwork-panel__bottombar">
-            <button className="artwork-panel__locate-btn">
+            <button
+              className="artwork-panel__locate-btn"
+              onClick={() => onFindInMuseum?.(artwork)}
+            >
               <MapPin size={18} strokeWidth={2.2} />
               <span>Find in Museum</span>
             </button>

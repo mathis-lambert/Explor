@@ -56,16 +56,28 @@ export default function App() {
                 : "Added to favorites",
             );
           }}
+          onFindInMuseum={(artwork) => {
+            state.setMapFocusDepartmentName(artwork.department || "");
+            state.setActiveTab("map");
+            state.setSelectedArtwork(null);
+            state.showToast(
+              artwork.department
+                ? `Locating ${artwork.department} on the museum map`
+                : "Opening museum map",
+            );
+          }}
         />
       )}
 
       {state.showTicketCheckout && (
         <TicketCheckout
-          ticket={state.showTicketCheckout}
+          session={state.showTicketCheckout}
           onClose={() => state.setShowTicketCheckout(null)}
-          onConfirm={() => {
+          onComplete={(result) => {
             state.setShowTicketCheckout(null);
-            state.showToast("Ticket purchased successfully!");
+            state.showToast(
+              `Ticket confirmed${result?.confirmationCode ? ` • ${result.confirmationCode}` : ""}`,
+            );
           }}
         />
       )}
@@ -74,10 +86,23 @@ export default function App() {
         <RoutePreview
           route={state.selectedRoute}
           onClose={() => state.setSelectedRoute(null)}
+          onSaveRoute={() => {
+            state.saveRoute(state.selectedRoute);
+            state.showToast("Route saved to your profile");
+          }}
+          isSaved={state.savedRoutes.some((route) => route.id === state.selectedRoute.id)}
+          onStartRoute={() => {
+            state.setSelectedRoute(null);
+            state.showToast("Route guidance started (prototype)");
+          }}
         />
       )}
 
-      {state.toast && <div className="toast">{state.toast}</div>}
+      {state.toast && (
+        <div className="toast" role="status" aria-live="polite" aria-atomic="true">
+          {state.toast}
+        </div>
+      )}
     </div>
   );
 }

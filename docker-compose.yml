@@ -1,0 +1,25 @@
+services:
+  explor-web:
+    container_name: explor-web
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: explor-web:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks: [ proxy ]
+    expose:
+      - "4173"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.explor-web.rule=Host(`${EXPLOR_DOMAIN:-explor.mathislambert.fr}`)"
+      - "traefik.http.routers.explor-web.entrypoints=websecure"
+      - "traefik.http.routers.explor-web.tls=true"
+      - "traefik.http.routers.explor-web.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.services.explor-web.loadbalancer.server.port=4173"
+
+networks:
+  proxy:
+    external: true

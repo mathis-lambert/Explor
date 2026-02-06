@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Clock,
+  Calendar,
   Check,
   Info,
   ArrowRight,
@@ -74,23 +75,53 @@ function generateNextSevenDays() {
     "Dec",
   ];
   const today = new Date();
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 10; i++) {
     const date = new Date(today);
     date.setDate(today.getDate() + i);
+    const isUnavailable = i === 4;
     days.push({
       dayName: dayNames[date.getDay()],
       dateNum: date.getDate(),
       month: monthNames[date.getMonth()],
       isToday: i === 0,
+      isUnavailable,
       key: date.toISOString(),
+      isoDate: date.toISOString().slice(0, 10),
     });
   }
   return days;
 }
 
 export default function TicketsPage({ state }) {
+  const { setScreenStatus } = state;
   const [selectedDate, setSelectedDate] = useState(0);
-  const datePills = generateNextSevenDays();
+  const [selectedTime, setSelectedTime] = useState("10:30 AM");
+  const datePills = useMemo(() => generateNextSevenDays(), []);
+  const selectedVisitDate = datePills[selectedDate];
+  const timeOptions = useMemo(() => ["10:30 AM", "12:00 PM", "2:30 PM", "4:00 PM"], []);
+  const isUnavailable = Boolean(selectedVisitDate?.isUnavailable);
+
+  useEffect(() => {
+    if (isUnavailable) {
+      setScreenStatus("tickets", "empty");
+      return;
+    }
+
+    setScreenStatus("tickets", "success");
+  }, [isUnavailable, setScreenStatus]);
+
+  const openCheckout = (ticket) => {
+    if (!selectedVisitDate) {
+      return;
+    }
+
+    state.setShowTicketCheckout({
+      ticket,
+      visitDate: selectedVisitDate.isoDate,
+      timeLabel: selectedTime,
+      isUnavailable,
+    });
+  };
 
   return (
     <div className="page tickets-page">
@@ -116,8 +147,40 @@ export default function TicketsPage({ state }) {
                 {day.isToday ? "Today" : day.dayName}
               </span>
               <span className="tix-date__num">{day.dateNum}</span>
+              {day.isUnavailable && <span className="tix-date__dot" aria-hidden="true" />}
             </button>
           ))}
+        </div>
+      </section>
+
+      <section className="tix-session section">
+        <div className="section-header">
+          <h2>Visit Session</h2>
+        </div>
+
+        <div className={`tix-session__card${isUnavailable ? " tix-session__card--warn" : ""}`}>
+          <div className="tix-session__line">
+            <Calendar size={14} strokeWidth={2} />
+            <span>
+              {selectedVisitDate?.isToday ? "Today" : `${selectedVisitDate?.dayName}, ${selectedVisitDate?.month} ${selectedVisitDate?.dateNum}`}
+            </span>
+          </div>
+          <div className="tix-time-pills">
+            {timeOptions.map((timeLabel) => (
+              <button
+                key={timeLabel}
+                className={`tix-time-pill${selectedTime === timeLabel ? " tix-time-pill--active" : ""}`}
+                onClick={() => setSelectedTime(timeLabel)}
+              >
+                {timeLabel}
+              </button>
+            ))}
+          </div>
+          {isUnavailable && (
+            <p className="tix-session__warning">
+              Selected day is fully booked. Choose another date to continue.
+            </p>
+          )}
         </div>
       </section>
 
@@ -189,10 +252,11 @@ export default function TicketsPage({ state }) {
               )}
               <button
                 className="tix-ticket__buy-btn"
-                onClick={() => state.setShowTicketCheckout(ticket)}
+                onClick={() => openCheckout(ticket)}
+                disabled={isUnavailable}
               >
                 <Ticket size={14} strokeWidth={2} />
-                Buy
+                {isUnavailable ? "Unavailable" : "Buy"}
               </button>
             </div>
           </article>
@@ -216,7 +280,10 @@ export default function TicketsPage({ state }) {
               </p>
               <button
                 className="tix-member__btn"
-                onClick={() => state.showToast("Sign in coming soon")}
+                onClick={() => {
+                  state.setActiveTab("profile");
+                  state.showToast("Sign in to unlock membership perks.");
+                }}
               >
                 Become a Member
                 <ArrowRight size={14} strokeWidth={2.2} />

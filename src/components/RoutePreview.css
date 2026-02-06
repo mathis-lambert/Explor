@@ -276,10 +276,36 @@
   animation: fadeUp 0.45s var(--ease-out) 0.34s both;
 }
 
+.route-panel__footer-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.route-panel__save-btn {
+  flex: 0 0 40%;
+  min-height: 52px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--color-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-card);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+}
+
+.route-panel__save-btn:active {
+  transform: scale(0.97);
+  background: var(--color-primary-05);
+}
+
 /* --- Start route button --- */
 
 .route-panel__start-btn {
-  width: 100%;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;

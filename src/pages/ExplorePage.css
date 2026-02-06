@@ -143,6 +143,21 @@
   margin-right: var(--space-lg);
 }
 
+.explore-sort-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  background: var(--color-primary-05);
+}
+
+.explore-sort-btn:active {
+  transform: scale(0.94);
+}
+
 .explore-view-btn {
   display: flex;
   align-items: center;
@@ -163,6 +178,16 @@
 /* ===== BENTO GRID ===== */
 .explore-artworks {
   animation: fadeUp 0.5s var(--ease-out) 0.15s both;
+}
+
+.explore-results-meta {
+  margin-bottom: var(--space-sm);
+}
+
+.explore-results-meta p {
+  color: var(--color-text-tertiary);
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-wide);
 }
 
 .explore-bento {

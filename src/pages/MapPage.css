@@ -409,6 +409,20 @@
   margin-bottom: var(--space-lg);
 }
 
+.map-route-generator__error {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--space-sm);
+  color: var(--color-error);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+
+.map-route-generator__error svg {
+  flex-shrink: 0;
+}
+
 .map-route-tag {
   display: inline-flex;
   align-items: center;
@@ -424,6 +438,11 @@
 
 .map-route-generator__btn {
   width: 100%;
+}
+
+.map-route-generator__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Locked state */

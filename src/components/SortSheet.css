@@ -1,0 +1,97 @@
+.sort-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.sort-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--color-bg-overlay);
+  animation: fadeIn 0.24s var(--ease-out) both;
+}
+
+.sort-panel {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  border-top-left-radius: var(--radius-2xl);
+  border-top-right-radius: var(--radius-2xl);
+  background: var(--color-bg-card);
+  box-shadow: var(--shadow-xl);
+  padding: var(--space-sm) var(--space-lg) calc(var(--space-lg) + env(safe-area-inset-bottom, 0px));
+  animation: slideUp 0.3s var(--ease-out) both;
+}
+
+.sort-panel__header {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.sort-panel__drag-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-15);
+}
+
+.sort-panel__title {
+  font-family: var(--font-serif);
+  font-size: var(--text-h3);
+  color: var(--color-text);
+}
+
+.sort-panel__close {
+  position: absolute;
+  right: 0;
+  top: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+}
+
+.sort-panel__close:active {
+  background: var(--color-primary-05);
+}
+
+.sort-panel__options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sort-panel__option {
+  width: 100%;
+  min-height: 48px;
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--color-border-light);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  font-weight: 500;
+  background: var(--color-bg-card);
+}
+
+.sort-panel__option:active {
+  transform: scale(0.99);
+}
+
+.sort-panel__option--active {
+  color: var(--color-text);
+  border-color: var(--color-accent);
+  background: var(--color-accent-bg);
+}

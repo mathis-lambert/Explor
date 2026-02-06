@@ -298,6 +298,22 @@
   opacity: 0.5;
 }
 
+.artwork-panel__source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--space-sm);
+  margin-bottom: var(--space-md);
+  color: var(--color-accent);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+}
+
+.artwork-panel__source-link:active {
+  opacity: 0.7;
+}
+
 /* ═══════ GALLERY BENTO ═══════ */
 .artwork-panel__gallery-section {
   margin-bottom: var(--space-lg);

@@ -13,8 +13,11 @@ import {
   ChevronRight,
   Compass,
   Star,
+  AlertTriangle,
 } from "lucide-react";
 import { fetchDepartments } from "../api/metApi";
+import { simulateRouteOutcome } from "../mocks/uiSimulation";
+import { buildPresetRoute, buildRouteFromPreferences } from "../mocks/routeBuilder";
 import "./MapPage.css";
 
 const popularRoutes = [
@@ -47,7 +50,6 @@ const popularRoutes = [
   },
 ];
 
-/* Layout presets for zones on each floor — purely decorative positioning */
 const zoneLayouts = {
   1: [
     { gridColumn: "1 / 3", gridRow: "1 / 2" },
@@ -99,11 +101,14 @@ function buildZonesFromDepartments(departments) {
 }
 
 export default function MapPage({ state }) {
+  const { setScreenStatus, mapFocusDepartmentName, setMapFocusDepartmentName } = state;
   const [activeFloor, setActiveFloor] = useState(1);
   const [selectedZone, setSelectedZone] = useState(null);
   const [mapZones, setMapZones] = useState([]);
   const [isLoadingZones, setIsLoadingZones] = useState(true);
   const [zonesError, setZonesError] = useState("");
+  const [routeError, setRouteError] = useState("");
+  const [isGeneratingRoute, setIsGeneratingRoute] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -111,14 +116,18 @@ export default function MapPage({ state }) {
     const loadZones = async () => {
       setIsLoadingZones(true);
       setZonesError("");
+      setScreenStatus("map", "loading");
 
       try {
         const departments = await fetchDepartments(controller.signal);
-        setMapZones(buildZonesFromDepartments(departments));
+        const builtZones = buildZonesFromDepartments(departments);
+        setMapZones(builtZones);
+        setScreenStatus("map", builtZones.length > 0 ? "success" : "empty");
       } catch (loadError) {
         if (loadError.name !== "AbortError") {
           setMapZones([]);
           setZonesError("Unable to load map departments from The Met API.");
+          setScreenStatus("map", "error");
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -130,33 +139,65 @@ export default function MapPage({ state }) {
     loadZones();
 
     return () => controller.abort();
-  }, []);
+  }, [setScreenStatus]);
+
+  useEffect(() => {
+    if (!mapFocusDepartmentName || mapZones.length === 0) {
+      return;
+    }
+
+    const match = mapZones.find((zone) =>
+      zone.name.toLowerCase().includes(mapFocusDepartmentName.toLowerCase()),
+    );
+
+    if (!match) {
+      return;
+    }
+
+    setActiveFloor(match.floor);
+    setSelectedZone(match);
+    setMapFocusDepartmentName("");
+  }, [
+    mapZones,
+    mapFocusDepartmentName,
+    setMapFocusDepartmentName,
+  ]);
 
   const currentZones = useMemo(
     () => mapZones.filter((zone) => zone.floor === activeFloor),
     [mapZones, activeFloor],
   );
 
-  const handleGenerateRoute = () => {
-    const routeZones =
-      state.preferences.length > 0
-        ? state.preferences.slice(0, 3)
-        : mapZones.slice(0, 3).map((zone) => zone.name);
+  const handleGenerateRoute = async () => {
+    if (!state.isLoggedIn) {
+      return;
+    }
 
-    state.setSelectedRoute({
-      name: "Met API Route",
-      duration: "2h 15min",
-      stops: Math.max(6, routeZones.length * 3),
-      zones: routeZones,
-      description: "Generated from live Met department data",
+    setRouteError("");
+    setIsGeneratingRoute(true);
+    setScreenStatus("map", "loading");
+
+    const routeBase = buildRouteFromPreferences({
+      zones: selectedZone ? [selectedZone, ...mapZones.filter((zone) => zone.id !== selectedZone.id)] : mapZones,
+      preferences: state.preferences,
     });
 
-    state.showToast("Personalized route generated");
+    try {
+      const generatedRoute = await simulateRouteOutcome(routeBase);
+      state.setSelectedRoute(generatedRoute);
+      state.saveRoute(generatedRoute);
+      setScreenStatus("map", "success");
+      state.showToast("Personalized route generated");
+    } catch {
+      setRouteError("We could not generate your route. Please retry.");
+      setScreenStatus("map", "error");
+    } finally {
+      setIsGeneratingRoute(false);
+    }
   };
 
   return (
     <div className="page map-page">
-      {/* ===== HEADER ===== */}
       <header className="map-header">
         <div className="map-header__text">
           <span className="map-header__overline">The Met</span>
@@ -165,14 +206,13 @@ export default function MapPage({ state }) {
         </div>
         <button
           className="map-header__icon-btn"
-          onClick={() => state.showToast("Layers view coming soon")}
+          onClick={() => state.showToast("Layer legend opened (prototype)")}
           aria-label="Map layers"
         >
           <Layers size={20} strokeWidth={1.8} />
         </button>
       </header>
 
-      {/* ===== FLOOR SELECTOR ===== */}
       <div className="map-floor-selector">
         <div className="map-floor-pills">
           <button
@@ -198,7 +238,6 @@ export default function MapPage({ state }) {
         </div>
       </div>
 
-      {/* ===== MAP AREA ===== */}
       <section className="map-container-section">
         <div className="map-canvas">
           {floorLabels[activeFloor].map((label) => (
@@ -239,7 +278,6 @@ export default function MapPage({ state }) {
         </div>
       </section>
 
-      {/* ===== ZONE INFO CARD ===== */}
       <section className="map-zone-info section">
         {isLoadingZones && (
           <div className="map-zone-hint">
@@ -273,9 +311,7 @@ export default function MapPage({ state }) {
                   <Map size={14} strokeWidth={2} />
                 </div>
                 <div className="map-zone-card__stat-text">
-                  <span className="map-zone-card__stat-value">
-                    {selectedZone.galleries}
-                  </span>
+                  <span className="map-zone-card__stat-value">{selectedZone.galleries}</span>
                   <span className="map-zone-card__stat-label">galleries</span>
                 </div>
               </div>
@@ -285,9 +321,7 @@ export default function MapPage({ state }) {
                   <Eye size={14} strokeWidth={2} />
                 </div>
                 <div className="map-zone-card__stat-text">
-                  <span className="map-zone-card__stat-value">
-                    {selectedZone.departmentId}
-                  </span>
+                  <span className="map-zone-card__stat-value">{selectedZone.departmentId}</span>
                   <span className="map-zone-card__stat-label">department id</span>
                 </div>
               </div>
@@ -296,6 +330,10 @@ export default function MapPage({ state }) {
               <button
                 className="btn btn-primary btn-sm"
                 onClick={() => {
+                  state.setExploreControls({
+                    departmentId: String(selectedZone.departmentId),
+                    query: "",
+                  });
                   state.setActiveTab("explore");
                   state.showToast(`Browsing ${selectedZone.name}`);
                 }}
@@ -305,7 +343,7 @@ export default function MapPage({ state }) {
               </button>
               <button
                 className="btn btn-outline btn-sm"
-                onClick={() => state.showToast("Directions feature coming soon")}
+                onClick={() => state.showToast("Follow the highlighted path prototype")}
               >
                 <Navigation size={15} strokeWidth={2} />
                 Directions
@@ -322,7 +360,6 @@ export default function MapPage({ state }) {
         )}
       </section>
 
-      {/* ===== YOUR ROUTE ===== */}
       <section className="map-your-route section">
         <div className="section-header">
           <h2>Your Route</h2>
@@ -344,19 +381,28 @@ export default function MapPage({ state }) {
               </div>
               {state.preferences && state.preferences.length > 0 && (
                 <div className="map-route-generator__tags">
-                  {state.preferences.map((pref) => (
-                    <span key={pref} className="map-route-tag">
-                      {pref}
+                  {state.preferences.map((preference) => (
+                    <span key={preference} className="map-route-tag">
+                      {preference}
                     </span>
                   ))}
                 </div>
               )}
+
+              {routeError && (
+                <p className="map-route-generator__error">
+                  <AlertTriangle size={14} strokeWidth={2} />
+                  {routeError}
+                </p>
+              )}
+
               <button
                 className="btn btn-accent btn-sm map-route-generator__btn"
                 onClick={handleGenerateRoute}
+                disabled={isGeneratingRoute}
               >
                 <Route size={15} strokeWidth={2} />
-                Generate Route
+                {isGeneratingRoute ? "Generating..." : "Generate Route"}
               </button>
             </div>
           </div>
@@ -368,13 +414,12 @@ export default function MapPage({ state }) {
         )}
       </section>
 
-      {/* ===== POPULAR ROUTES ===== */}
       <section className="map-popular-routes">
         <div className="section-header" style={{ padding: "0 var(--space-lg)" }}>
           <h2>Popular Routes</h2>
           <button
             className="section-link"
-            onClick={() => state.showToast("All routes coming soon")}
+            onClick={() => state.showToast("Featured route collection opened")}
           >
             See All
           </button>
@@ -390,7 +435,10 @@ export default function MapPage({ state }) {
                   "--route-from": route.colors[0],
                   "--route-to": route.colors[1],
                 }}
-                onClick={() => state.showToast("Route preview coming soon")}
+                onClick={() => {
+                  const preset = buildPresetRoute(route, mapZones.slice(0, 3).map((zone) => zone.name));
+                  state.setSelectedRoute(preset);
+                }}
               >
                 <div className="map-route-card__icon-circle">
                   <RouteIcon size={18} strokeWidth={1.8} />

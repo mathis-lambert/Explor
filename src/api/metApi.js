@@ -1,5 +1,8 @@
 const MET_API_BASE_URL =
-  "https://collectionapi.metmuseum.org/public/collection/v1";
+  import.meta.env.VITE_MET_API_BASE_URL ||
+  (import.meta.env.DEV
+    ? "/met-api"
+    : "https://collectionapi.metmuseum.org/public/collection/v1");
 const DEFAULT_QUERY = "art";
 const REQUEST_BATCH_SIZE = 12;
 
